@@ -94,10 +94,14 @@ class ApplicationController extends Controller
 
     public function submit(SubmitApplicationRequest $request, Application $application, ApplicationService $service): RedirectResponse
     {
+        $alreadySubmitted = ! $application->isEditable();
+
         $submitted = $service->submit($request->user(), $application, (string) $request->ip());
 
         return redirect()->route('student.applications.show', $submitted)
-            ->with('status', 'Application submitted. Your application number is ' . $submitted->application_no . '.');
+            ->with('status', $alreadySubmitted
+                ? 'This application was already submitted. Your application number is ' . $submitted->application_no . '.'
+                : 'Application submitted. Your application number is ' . $submitted->application_no . '.');
     }
 
     private function loadAll(Application $application): void
