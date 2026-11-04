@@ -37,7 +37,7 @@ class HomeController extends Controller
             ])->values();
 
         $applications = Application::where('user_id', $request->user()->id)
-            ->with(['circular', 'offering.schoolClass', 'version', 'shift', 'group', 'category', 'profile'])
+            ->with(['circular', 'offering.schoolClass', 'version', 'shift', 'group', 'category', 'profile', 'successPayment', 'roll'])
             ->latest('id')->get();
 
         return view('student.home', [
@@ -46,6 +46,7 @@ class HomeController extends Controller
             'selected' => $selected,
             'choices' => $choices,
             'applications' => $applications,
+            'payEnabled' => \App\Models\PaymentMethod::where('is_active', true)->exists(),
         ]);
     }
 }

@@ -57,7 +57,7 @@
 <section class="panel">
     <div class="panel-head"><div class="fw-bold fs-6">{{ $applications->total() }} {{ \Illuminate\Support\Str::plural('application', $applications->total()) }}</div></div>
     <div class="table-responsive"><table class="table">
-        <thead><tr><th>Tracking no</th><th>Application no</th><th>Name</th><th>Class</th><th>Version / Shift / Group</th><th>Category</th><th>Gender</th><th>Mobile</th><th>Status</th><th>Submitted</th><th class="text-end"></th></tr></thead>
+        <thead><tr><th>Tracking no</th><th>Application no</th><th>Name</th><th>Class</th><th>Version / Shift / Group</th><th>Category</th><th>Gender</th><th>Mobile</th><th>Roll</th><th>Payment</th><th>Status</th><th>Submitted</th><th class="text-end"></th></tr></thead>
         <tbody>
         @forelse ($applications as $a)
             <tr>
@@ -69,12 +69,14 @@
                 <td>{{ $a->category->name }}</td>
                 <td>{{ $a->profile?->gender }}</td>
                 <td>{{ $a->profile?->emergency_phone }}</td>
+                <td>{{ $a->roll?->roll_no ?? '-' }}</td>
+                <td><span class="tag {{ $a->successPayment ? 'tag-green' : 'tag-amber' }}">{{ $a->successPayment ? 'Paid' : ((int) $a->payable_minor > 0 ? 'Unpaid' : 'No fee') }}</span></td>
                 <td><span class="tag {{ $a->statusTag() }}">{{ $a->statusLabel() }}</span></td>
                 <td class="text-nowrap small">{{ $a->submitted_at?->format('d M Y, g:i A') }}</td>
                 <td class="text-end"><a href="{{ route('admin.applicants.show', $a) }}" class="btn btn-soft btn-sm">View</a></td>
             </tr>
         @empty
-            <tr><td colspan="11" class="text-center text-muted py-4">No applications match.</td></tr>
+            <tr><td colspan="13" class="text-center text-muted py-4">No applications match.</td></tr>
         @endforelse
         </tbody>
     </table></div>

@@ -13,6 +13,10 @@
     </div>
     <div class="small"><b>Tracking No:</b> <span class="num text-primary fw-bold">{{ $application->tracking_no }}</span><br>
         @if ($application->application_no)<b>Application No:</b> {{ $application->application_no }}<br>@endif
+        @if ($application->roll)<b>Roll No:</b> <span class="fw-bold">{{ $application->roll->roll_no }}</span><br>@endif
         <b>Status:</b> <span class="tag {{ $application->statusTag() }}">{{ $application->statusLabel() }}</span>
+        @if ($application->status !== 'draft')
+            <span class="tag {{ $application->successPayment ? 'tag-green' : 'tag-amber' }}">{{ $application->successPayment ? 'Paid' : ((int) $application->payable_minor > 0 ? 'Unpaid' : 'No fee') }}</span>
+        @endif
     </div>
 </section>

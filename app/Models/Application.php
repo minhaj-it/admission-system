@@ -69,7 +69,15 @@ class Application extends Model
     public function addresses(): HasMany { return $this->hasMany(StudentAddress::class); }
     public function previous(): HasOne { return $this->hasOne(PreviousAcademicRecord::class); }
     public function documents(): HasMany { return $this->hasMany(ApplicationDocument::class); }
+    public function payments(): HasMany { return $this->hasMany(Payment::class)->latest('id'); }
+    public function successPayment(): HasOne { return $this->hasOne(Payment::class)->where('status', Payment::SUCCESS); }
+    public function roll(): HasOne { return $this->hasOne(ApplicationRoll::class); }
     public function histories(): HasMany { return $this->hasMany(ApplicationStatusHistory::class)->orderBy('id'); }
+
+    public function isPaid(): bool
+    {
+        return $this->successPayment()->exists();
+    }
 
     public function isEditable(): bool
     {

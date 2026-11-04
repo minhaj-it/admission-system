@@ -51,6 +51,21 @@
         </section>
 
         <section class="panel mb-4">
+            <div class="panel-head"><div class="fw-bold fs-6">Payments</div>@if ($application->roll)<span class="ms-auto small">Roll <b>{{ $application->roll->roll_no }}</b></span>@endif</div>
+            <div class="panel-body small">
+                @forelse ($application->payments as $pay)
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ \App\Support\Money::format((int) $pay->amount_minor) }} - {{ $pay->gateway === 'free' ? 'No fee' : ucfirst($pay->gateway) }}
+                            <span class="text-muted">{{ $pay->created_at->format('d M, g:i A') }}</span></span>
+                        @can('payments.view')<a href="{{ route('admin.payments.show', $pay) }}"><span class="tag {{ $pay->statusTag() }}">{{ $pay->statusLabel() }}</span></a>@else<span class="tag {{ $pay->statusTag() }}">{{ $pay->statusLabel() }}</span>@endcan
+                    </div>
+                @empty
+                    <div class="text-muted">No payment yet.</div>
+                @endforelse
+            </div>
+        </section>
+
+        <section class="panel mb-4">
             <div class="panel-head"><div class="fw-bold fs-6">Documents</div></div>
             <div class="panel-body">
                 @forelse ($application->documents as $document)

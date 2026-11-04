@@ -14,7 +14,7 @@ return [
             ['label' => 'Classes & Sessions', 'route' => 'admin.master.index', 'active' => 'admin.master.*', 'can' => 'classes.view'],
             ['label' => 'User Roles', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'can' => 'roles.view'],
             ['label' => 'User List', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'can' => 'users.view'],
-            ['label' => 'Payment Method', 'route' => null, 'can' => 'payment-method.view'],
+            ['label' => 'Payment Method', 'route' => 'admin.payment-methods.index', 'active' => 'admin.payment-methods.*', 'can' => 'payment-method.view'],
             ['label' => 'Audit Log', 'route' => 'admin.audit.index', 'active' => 'admin.audit.*', 'can' => 'audit.view'],
         ]],
         ['id' => 'circular', 'icon' => 'bi-clipboard-check', 'label' => 'Circular', 'children' => [
@@ -25,7 +25,7 @@ return [
             ['label' => 'Applicant Info Update', 'route' => null, 'can' => 'applicant-edit.view'],
         ]],
         ['id' => 'registrar', 'icon' => 'bi-person-lines-fill', 'label' => 'Registrar List', 'route' => null, 'can' => 'registered-accounts.view'],
-        ['id' => 'payments', 'icon' => 'bi-credit-card-2-front', 'label' => 'Payment List', 'route' => null, 'can' => 'payments.view'],
+        ['id' => 'payments', 'icon' => 'bi-credit-card-2-front', 'label' => 'Payment List', 'route' => 'admin.payments.index', 'active' => 'admin.payments.*', 'can' => 'payments.view'],
         ['id' => 'result', 'icon' => 'bi-display', 'label' => 'Result Update', 'children' => [
             ['label' => 'Publish Result', 'route' => null, 'can' => 'publish.view'],
             ['label' => 'Merit List', 'route' => null, 'can' => 'merit.view'],

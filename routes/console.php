@@ -1,8 +1,6 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Re-checks gateway payments whose customer never came back to the site (see App\Console\Commands\ReconcilePayments).
+Schedule::command('payments:reconcile')->everyFiveMinutes()->withoutOverlapping();

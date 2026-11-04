@@ -43,7 +43,7 @@ class ApplicantController extends Controller
 
         $applications = Application::query()
             ->where('status', '!=', Application::DRAFT) // unfinished drafts are never shown to staff
-            ->with(['profile', 'offering.schoolClass', 'offering.session', 'version', 'shift', 'group', 'category'])
+            ->with(['profile', 'offering.schoolClass', 'offering.session', 'version', 'shift', 'group', 'category', 'successPayment', 'roll'])
             ->when($q !== '', function ($query) use ($q) {
                 $like = '%' . addcslashes($q, '\\%_') . '%';
                 $digits = preg_replace('/\D/', '', $q);
@@ -93,7 +93,7 @@ class ApplicantController extends Controller
 
         $application->load([
             'circular', 'offering.schoolClass', 'offering.session', 'offering.documents', 'version', 'shift', 'group', 'category',
-            'profile', 'guardians', 'addresses', 'previous', 'documents.type', 'documents.verifier', 'histories.actor', 'user',
+            'profile', 'guardians', 'addresses', 'previous', 'documents.type', 'documents.verifier', 'histories.actor', 'user', 'successPayment', 'roll', 'payments',
         ]);
 
         return view('admin.applicants.show', [

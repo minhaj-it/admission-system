@@ -185,3 +185,68 @@ GD is needed for photograph uploads (the tests that upload images skip themselve
 - **Not in this milestone**: payment (the payable amount is shown, "Pay" follows in Milestone 6), roll numbers, admit card and application PDF, e-mail/SMS notifications, Applicant Info Update (staff editing of a form), bulk actions, Excel/PDF exports, the "applied" columns on the circular pages.
 
 Tests added: application flow, validation, age/gender/duplicate rules, submission and idempotency, correction loop, document upload and access, review list/filters/masking, status workflow, authorization (~65 cases). **Not run yet.**
+
+---
+
+# Milestone 6 - payments (Manual and ShurjoPay), roll numbers, payment list, receipts
+
+## Apply
+
+```bash
+unzip -o ../admission-system-m1-m6-overlay.zip
+npm run build
+php artisan migrate                # 3 new migrations: payment_methods, payments (+events), application_rolls
+php artisan test
+```
+Add the keys at the end of `.env.example` to your real `.env` and fill them in **on the server only**:
+
+```
+SHURJOPAY_MODE=sandbox        # "live" only when you are ready to take real money
+SHURJOPAY_USERNAME=
+SHURJOPAY_PASSWORD=
+SHURJOPAY_PREFIX=
+SHURJOPAY_CUSTOMER_CITY=Dhaka
+SHURJOPAY_CUSTOMER_POST_CODE=1000
+
+```
+then `php artisan config:clear` (or `config:cache` in production). The cron job `* * * * * php /path/to/artisan schedule:run` already runs `payments:reconcile` every 5 minutes.
+
+## What is new
+
+- **Payment Method** (`/admin/settings/payment-methods`, `payment-method.view / edit`): bKash, Nagad, SSLCommerz, ShurjoPay and Manual are listed; **only Manual and ShurjoPay can be switched on in this release**, and **only one at a time** (switching one on switches the other off). ShurjoPay shows which `.env` values are set or missing - never the values. Manual has an instructions text students see.
+- **Student payment** (`/student/applications/{id}/pay`): the page shows the fee lines and total from the fee snapshot taken at submission, and offers only the active method.
+  - *Manual*: the student enters the wallet number and transaction id; the payment waits for staff.
+  - *ShurjoPay*: the student is sent to ShurjoPay's checkout and comes back to `/student/payments/shurjopay/return`.
+- **Payment List** (`/admin/payments`, `payments.view`; deciding needs `payments.verify`): Successful / Pending / Failed-cancelled / All tabs, search (payment ref, transaction id, name, tracking or application no), method and date filters, pagination; a detail page with the event log; **Approve / Reject** for manual payments (a reason is required to reject), **Check with gateway** for pending ShurjoPay payments.
+- **Receipt** (`/payments/{id}/receipt`): printable page (browser Print / Save as PDF) for successful payments, for the owner and for staff with `payments.view`.
+- **Roll number**: allocated when the payment succeeds, from a locked counter per scope (circular + class + session, plus version and group according to the class setup's Roll Type); format = Custom Roll Prefix + 5 digits (`BK00001`). A class with no payable fee gets its roll at submission.
+- Dashboard shows payment totals; student panel and applicant list show Paid / Unpaid and the roll number.
+
+## How ShurjoPay is verified (from the official REST documentation)
+
+1. `get_token` (cached 10 minutes) -> `secret-pay` creates the order; the student is redirected to the returned `checkout_url` (only an `https://...shurjopayment.com` address is ever followed).
+2. When the student returns, **the browser's word is ignored**. The server calls `verification` for the stored order id and accepts the payment only if: `sp_code` is `1000`, the order id, **our merchant reference**, the **amount** (in paisa, compared as integers) and the **currency (BDT)** all match the payment we created.
+3. Any mismatch marks the payment *failed* with the reason, writes an audit entry and credits nothing.
+4. Processing is idempotent: the payment row is locked, repeated confirmations are ignored, and a **unique `success_key` per application** makes a second successful payment for the same application impossible (the extra one is marked *failed - duplicate payment* and logged for a manual refund).
+5. Customers who never come back are settled by `payments:reconcile` (every 5 minutes, payments 5 minutes to 3 days old).
+6. Only a whitelist of gateway fields is stored in `payment_events` (no card number, holder name, phone or e-mail). Credentials live in `.env` only.
+
+ShurjoPay has no signature or webhook in its documentation, so the server-to-server `verification` call is the authentication.
+
+## Please check in the sandbox (I could not call ShurjoPay from here)
+
+- A test payment end to end: start -> pay on ShurjoPay's page -> return -> status *Successful*, roll number visible.
+- A cancelled payment and a failed payment.
+- That the `amount` ShurjoPay reports equals what we sent. If your merchant account adds a customer-side charge or discount, verification will (deliberately) mark such payments as an amount mismatch - tell me and I will adjust.
+- `sp_code`: `1000` = success, `1001` = failed, `1002` = cancelled are handled; any other code is treated as "not paid yet" and re-checked by the reconcile job.
+
+## Limits
+
+- **Refunds are not built** (the `refunded` status is reserved). A duplicate or wrong payment has to be refunded in the gateway / wallet by hand; the system flags it.
+- bKash, Nagad and SSLCommerz are listed but cannot be switched on yet.
+- Admission/uniform fees collected after selection (schools) are not built; a payment already has a `purpose` column for it.
+- Manual payments rely on staff comparing the transaction id with the wallet statement.
+- Receipt and later documents use the browser's Print / Save as PDF; server-side PDF needs a Bengali font test first.
+- Application form and admit card downloads (after payment) are the next milestone; notifications (e-mail now, SMS when a provider exists) follow.
+
+Tests added: payment methods, manual payments, ShurjoPay start/return/cancel/mismatch/idempotency/duplicate/reconcile/token reuse, roll numbering per scope, no-fee applications, payment list/receipt/dashboard (~60 cases). **Not run yet.**

@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationService
 {
-    public function __construct(private DocumentService $documents)
+    public function __construct(private DocumentService $documents, private PaymentService $payments)
     {
     }
 
@@ -181,6 +181,11 @@ class ApplicationService
                     'application_id' => $locked->id, 'from_status' => $from, 'to_status' => Application::SUBMITTED, 'actor_id' => $user->id,
                     'remark' => $from === Application::CORRECTION ? 'Corrected application resubmitted' : null,
                 ]);
+
+                // nothing to pay: settle it now (a resubmission after a correction is already settled or paid)
+                if ((int) $locked->payable_minor === 0 && ! $locked->payments()->where('status', 'success')->exists()) {
+                    $this->payments->settleFree($locked);
+                }
 
                 return $locked;
             });

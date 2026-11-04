@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\Payment;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -14,7 +15,10 @@ class DashboardController extends Controller
         $byStatus = Application::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
         $submitted = $byStatus->except(Application::DRAFT)->sum();
 
+        $pay = Payment::query()->selectRaw('status, count(*) as total, sum(amount_minor) as amount')->groupBy('status')->get()->keyBy('status');
+
         return view('admin.dashboard', [
+            'pay' => $pay,
             'drafts' => (int) ($byStatus[Application::DRAFT] ?? 0),
             'submitted' => (int) $submitted,
             'today' => Application::where('status', '!=', Application::DRAFT)->whereDate('submitted_at', today())->count(),

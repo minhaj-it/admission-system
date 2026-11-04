@@ -11,6 +11,7 @@ use App\Models\Application;
 use App\Models\CircularOffering;
 use App\Models\Institution;
 use App\Services\ApplicationService;
+use App\Services\PaymentService;
 use App\Support\ApplicationData;
 use App\Support\ApplicationRules;
 use App\Support\FormOptions;
@@ -35,7 +36,7 @@ class ApplicationController extends Controller
         return redirect($route)->with('status', $created ? 'Application started. Your tracking number is ' . $application->tracking_no . '.' : 'You already have an application for this selection.');
     }
 
-    public function show(Application $application): View
+    public function show(Application $application, PaymentService $payments): View
     {
         Gate::authorize('view', $application);
 
@@ -45,6 +46,8 @@ class ApplicationController extends Controller
             'application' => $application,
             'data' => ApplicationData::flatten($application),
             'institute' => Institution::current(),
+            'canPay' => $payments->canPay($application) && $payments->activeMethod() !== null,
+            'pendingManual' => $application->payments()->where('status', 'manual_pending')->first(),
         ]);
     }
 
@@ -108,7 +111,7 @@ class ApplicationController extends Controller
     {
         $application->load([
             'circular', 'offering.schoolClass', 'offering.session', 'offering.documents', 'version', 'shift', 'group', 'category',
-            'profile', 'guardians', 'addresses', 'previous', 'documents.type', 'histories.actor',
+            'profile', 'guardians', 'addresses', 'previous', 'documents.type', 'histories.actor', 'successPayment', 'roll',
         ]);
     }
 }

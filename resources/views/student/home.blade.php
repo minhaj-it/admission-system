@@ -83,6 +83,7 @@
                     <div class="fw-bold">{{ $institute->name }}</div>
                     <div class="small text-muted">Circular Title: {{ $a->circular->title }}</div>
                     <div class="mt-1"><span class="tag {{ $a->statusTag() }}">{{ $a->statusLabel() }}</span>
+                        @if ($a->status !== 'draft')<span class="tag {{ $a->successPayment ? 'tag-green' : 'tag-amber' }}">{{ $a->successPayment ? 'Paid' : ((int) $a->payable_minor > 0 ? 'Unpaid' : 'No fee') }}</span>@endif
                         <span class="small text-muted ms-2">{{ ($a->submitted_at ?? $a->created_at)->format('d/m/Y') }}</span></div>
                 </div>
             </div>
@@ -97,7 +98,7 @@
                         <span class="sp-dot">•</span> Version:<b>{{ $a->version->name }}</b>
                         <span class="sp-dot">•</span> Category:<b>{{ $a->category->name }}</b>
                     </div>
-                    <div class="small mt-1">Tracking No: <b class="num text-primary">{{ $a->tracking_no }}</b>@if ($a->application_no) <span class="ms-2">Application No: <b>{{ $a->application_no }}</b></span>@endif</div>
+                    <div class="small mt-1">Tracking No: <b class="num text-primary">{{ $a->tracking_no }}</b>@if ($a->application_no) <span class="ms-2">Application No: <b>{{ $a->application_no }}</b></span>@endif @if ($a->roll) <span class="ms-2">Roll: <b>{{ $a->roll->roll_no }}</b></span>@endif</div>
                 </div>
             </div>
             <div class="app-dl">
@@ -105,6 +106,12 @@
                     <a class="btn btn-soft" href="{{ route('student.applications.step', [$a, max(1, min($a->current_step, 5))]) }}"><i class="bi bi-pencil-square me-1"></i>{{ $a->status === 'draft' ? 'Complete Form' : 'Correct Form' }}</a>
                 @else
                     <a class="btn btn-soft" href="{{ route('student.applications.show', $a) }}"><i class="bi bi-eye me-1"></i>View</a>
+                    @if (! $a->successPayment && $a->status !== 'rejected' && (int) $a->payable_minor > 0 && $payEnabled)
+                        <a class="btn btn-main" href="{{ route('student.payments.create', $a) }}"><i class="bi bi-credit-card me-1"></i>Pay Now</a>
+                    @endif
+                @endif
+                @if ($a->successPayment)
+                    <a class="btn btn-soft" href="{{ route('payments.receipt', $a->successPayment) }}" target="_blank" rel="noopener"><i class="bi bi-receipt me-1"></i>Receipt</a>
                 @endif
             </div>
         </article>

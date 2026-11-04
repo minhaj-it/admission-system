@@ -31,6 +31,22 @@
     @endforeach
 </div>
 
+@can('payments.view')
+@php
+    $paid = $pay['success'] ?? null;
+    $open = collect(['initiated', 'pending', 'manual_pending'])->map(fn ($k) => $pay[$k] ?? null)->filter();
+    $bad = collect(['failed', 'cancelled', 'manual_rejected'])->map(fn ($k) => $pay[$k] ?? null)->filter();
+@endphp
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="panel p-3 h-100"><div class="small text-muted"><i class="bi bi-cash-coin me-1"></i>Successful payments</div>
+        <div class="fs-3 fw-bold num">{{ number_format((int) ($paid->total ?? 0)) }}</div><div class="small">{{ \App\Support\Money::format((int) ($paid->amount ?? 0)) }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="panel p-3 h-100"><div class="small text-muted"><i class="bi bi-hourglass me-1"></i>Pending payments</div>
+        <div class="fs-3 fw-bold num">{{ number_format((int) $open->sum('total')) }}</div><div class="small">{{ \App\Support\Money::format((int) $open->sum('amount')) }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="panel p-3 h-100"><div class="small text-muted"><i class="bi bi-x-octagon me-1"></i>Failed / cancelled</div>
+        <div class="fs-3 fw-bold num">{{ number_format((int) $bad->sum('total')) }}</div></div></div>
+</div>
+@endcan
+
 <div class="row g-4">
     <div class="col-lg-5">
         <section class="panel">
@@ -67,5 +83,5 @@
         </section>
     </div>
 </div>
-<div class="text-muted small mt-3">Payment statistics and seat usage will appear here once online payment is available.</div>
+<div class="text-muted small mt-3">Seat usage will appear here with the reports.</div>
 @endsection

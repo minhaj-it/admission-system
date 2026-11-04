@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\CircularController;
 use App\Http\Controllers\Admin\CircularOfferingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InstituteController;
+use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
@@ -15,6 +17,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\Student\PaymentController as StudentPaymentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Student\ApplicationController as StudentApplicationController;
 use App\Http\Controllers\Student\HomeController as StudentHomeController;
@@ -45,6 +49,7 @@ Route::middleware(SecurityHeaders::class)->group(function () {
 
         // authorised per request by ApplicationPolicy (owner student, or staff with applicant-list.view)
         Route::get('/applications/{application}/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+        Route::get('/payments/{payment}/receipt', [ReceiptController::class, 'show'])->name('payments.receipt');
 
         Route::middleware(EnsureAccountType::class . ':staff')->prefix('admin')->name('admin.')->group(function () {
             Route::get('/', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
@@ -87,6 +92,17 @@ Route::middleware(SecurityHeaders::class)->group(function () {
             Route::patch('applicants/{application}/status', [ApplicantController::class, 'status'])->middleware('can:applicant.status')->name('applicants.status');
             Route::patch('applicants/{application}/documents/{document}', [ApplicantController::class, 'document'])->middleware('can:document.verify')->name('applicants.document');
 
+            Route::get('payments', [AdminPaymentController::class, 'index'])->middleware('can:payments.view')->name('payments.index');
+            Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->middleware('can:payments.view')->name('payments.show');
+            Route::patch('payments/{payment}/approve', [AdminPaymentController::class, 'approve'])->middleware('can:payments.verify')->name('payments.approve');
+            Route::patch('payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->middleware('can:payments.verify')->name('payments.reject');
+            Route::patch('payments/{payment}/recheck', [AdminPaymentController::class, 'recheck'])->middleware('can:payments.verify')->name('payments.recheck');
+
+            Route::get('settings/payment-methods', [PaymentMethodController::class, 'index'])->middleware('can:payment-method.view')->name('payment-methods.index');
+            Route::patch('settings/payment-methods/{method}/activate', [PaymentMethodController::class, 'activate'])->middleware('can:payment-method.edit')->name('payment-methods.activate');
+            Route::patch('settings/payment-methods/{method}/deactivate', [PaymentMethodController::class, 'deactivate'])->middleware('can:payment-method.edit')->name('payment-methods.deactivate');
+            Route::put('settings/payment-methods/{method}/instructions', [PaymentMethodController::class, 'instructions'])->middleware('can:payment-method.edit')->name('payment-methods.instructions');
+
             Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('can:audit.view')->name('audit.index');
         });
 
@@ -97,6 +113,12 @@ Route::middleware(SecurityHeaders::class)->group(function () {
             Route::get('applications/{application}', [StudentApplicationController::class, 'show'])->name('applications.show');
             Route::get('applications/{application}/step/{step}', [StudentApplicationController::class, 'step'])->whereIn('step', [1, 2, 3, 4, 5])->name('applications.step');
             Route::put('applications/{application}/step/{step}', [StudentApplicationController::class, 'saveStep'])->whereIn('step', [1, 2, 3, 4])->name('applications.step.save');
+            Route::get('applications/{application}/pay', [StudentPaymentController::class, 'create'])->name('payments.create');
+            Route::post('applications/{application}/pay/manual', [StudentPaymentController::class, 'manual'])->middleware('throttle:10,1')->name('payments.manual');
+            Route::post('applications/{application}/pay/gateway', [StudentPaymentController::class, 'gateway'])->middleware('throttle:10,1')->name('payments.gateway');
+            Route::get('payments/shurjopay/return', [StudentPaymentController::class, 'shurjopayReturn'])->middleware('throttle:30,1')->name('payments.shurjopay.return');
+            Route::get('payments/shurjopay/cancel', [StudentPaymentController::class, 'shurjopayCancel'])->middleware('throttle:30,1')->name('payments.shurjopay.cancel');
+
             Route::post('applications/{application}/submit', [StudentApplicationController::class, 'submit'])->middleware('throttle:10,1')->name('applications.submit');
         });
     });

@@ -22,9 +22,28 @@
 @endif
 
 @if ($application->status !== 'draft')
-    <section class="panel mb-4"><div class="panel-body small">
-        <b>Application fee payable:</b> {{ \App\Support\Money::format((int) $application->payable_minor) }}
-        <span class="text-muted ms-2">Online payment opens in the next release.</span>
+    <section class="panel mb-4"><div class="panel-body">
+        @if ($application->successPayment)
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div><span class="tag tag-green">Paid</span> <b>{{ \App\Support\Money::format((int) $application->successPayment->amount_minor) }}</b>
+                    <span class="text-muted small ms-2">{{ $application->successPayment->paid_at?->format('d M Y, g:i A') }}</span>
+                    @if ($application->roll)<span class="ms-3">Roll No: <b>{{ $application->roll->roll_no }}</b></span>@endif</div>
+                <a href="{{ route('payments.receipt', $application->successPayment) }}" target="_blank" rel="noopener" class="btn btn-soft btn-sm ms-lg-auto"><i class="bi bi-receipt me-1"></i>Receipt</a>
+            </div>
+        @elseif ((int) $application->payable_minor === 0)
+            <span class="tag tag-green">No fee</span> <span class="text-muted small">No payment is required for this application.</span>
+        @else
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div><span class="tag tag-amber">Unpaid</span> Application fee payable: <b>{{ \App\Support\Money::format((int) $application->payable_minor) }}</b></div>
+                @if ($pendingManual)
+                    <span class="small text-muted ms-lg-auto">Your payment details are waiting for verification by the office.</span>
+                @elseif ($canPay)
+                    <a href="{{ route('student.payments.create', $application) }}" class="btn btn-main btn-sm ms-lg-auto"><i class="bi bi-credit-card me-1"></i>Pay Now</a>
+                @elseif ($application->status !== 'rejected')
+                    <span class="small text-muted ms-lg-auto">Online payment is not open yet.</span>
+                @endif
+            </div>
+        @endif
     </div></section>
 @endif
 
