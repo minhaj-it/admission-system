@@ -130,11 +130,10 @@ class PaymentAdminTest extends TestCase
 
     public function test_payments_are_never_mass_assignable(): void
     {
-        $payment = new Payment(['status' => 'success', 'amount_minor' => 1, 'application_id' => 1, 'success_key' => 'x']);
+        // the model is fully guarded: mass assignment is refused outright, so amount, status and ownership can never come from input
+        $this->expectException(\Illuminate\Database\Eloquent\MassAssignmentException::class);
 
-        $this->assertNull($payment->status);
-        $this->assertNull($payment->amount_minor);
-        $this->assertNull($payment->success_key);
+        new Payment(['status' => 'success', 'amount_minor' => 1, 'application_id' => 1, 'success_key' => 'x']);
     }
 
     public function test_the_event_log_cannot_be_edited_or_deleted(): void

@@ -42,7 +42,7 @@ class OfferingService
 
                 $offering->fill([
                     'roll_scope' => $data['roll_scope'],
-                    'roll_prefix' => ($data['roll_prefix'] ?? null) ?: null,
+                    'roll_prefix' => strtoupper(trim((string) ($data['roll_prefix'] ?? ''))) ?: null, // roll numbers always use an upper-case prefix
                     'form_fee' => ($data['form_fee'] ?? '') === '' ? 0 : $data['form_fee'],
                     'admission_fee' => ($data['admission_fee'] ?? '') === '' ? 0 : $data['admission_fee'],
                     'uniform_fee' => ($data['uniform_fee'] ?? '') === '' ? 0 : $data['uniform_fee'],

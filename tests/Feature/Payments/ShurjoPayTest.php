@@ -286,7 +286,7 @@ class ShurjoPayTest extends TestCase
 
         foreach (['1001' => GatewayResult::FAILED, '1002' => GatewayResult::CANCELLED, '1500' => GatewayResult::PENDING] as $code => $expected) {
             $this->freshHttp();
-            Http::fake([$this->sandbox . '/get_token' => Http::response(['token' => 't', 'store_id' => '1']), $this->sandbox . '/verification' => Http::response([$record + ['sp_code' => $code]])]);
+            Http::fake([$this->sandbox . '/get_token' => Http::response(['token' => 't', 'store_id' => '1']), $this->sandbox . '/verification' => Http::response([array_merge($record, ['sp_code' => (string) $code])])]);
             $this->assertSame($expected, $client->verify('sp1')->status, $code);
         }
     }
